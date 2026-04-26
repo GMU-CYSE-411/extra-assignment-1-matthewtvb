@@ -16,7 +16,6 @@
 
     const result = await api("/api/admin/users");
     const tbody = document.getElementById("admin-users");
-    // Replaced innerHTML with DOM APIs so usernames and display names are never parsed as HTML
     tbody.textContent = "";
     result.users.forEach((entry) => {
       const tr = document.createElement("tr");

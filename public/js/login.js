@@ -10,7 +10,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
       body: JSON.stringify(payload)
     });
 
-    // Store the CSRF token returned at login so all future requests include it
+    // store token for future requests
     if (result.csrfToken) {
       setCsrfToken(result.csrfToken);
     }

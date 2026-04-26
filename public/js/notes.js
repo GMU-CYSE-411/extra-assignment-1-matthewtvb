@@ -1,4 +1,3 @@
-// Replaced innerHTML with DOM APIs so note content is never parsed as HTML
 function noteCard(note) {
   const article = document.createElement("article");
   article.className = "note-card";
@@ -20,7 +19,6 @@ function noteCard(note) {
   return article;
 }
 
-// Removed ownerId parameter; the server derives it from the session
 async function loadNotes(search) {
   const query = new URLSearchParams();
   if (search) query.set("search", search);
@@ -40,7 +38,6 @@ async function loadNotes(search) {
       return;
     }
 
-    // Removed lines that set hidden ownerId fields on the forms
     await loadNotes("");
   } catch (error) {
     document.getElementById("notes-list").textContent = error.message;
@@ -50,7 +47,6 @@ async function loadNotes(search) {
 document.getElementById("search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
-  // Removed ownerId from the search call; server enforces ownership
   await loadNotes(formData.get("search"));
 });
 
@@ -58,7 +54,6 @@ document.getElementById("create-note-form").addEventListener("submit", async (ev
   event.preventDefault();
 
   const formData = new FormData(event.currentTarget);
-  // Removed ownerId from payload; server assigns ownership from the session
   const payload = {
     title: formData.get("title"),
     body: formData.get("body"),

@@ -1,4 +1,3 @@
-// Removed userId parameter; the server derives the target user from the session
 async function loadSettings() {
   const result = await api("/api/settings");
   const settings = result.settings;
@@ -9,7 +8,6 @@ async function loadSettings() {
   form.elements.statusMessage.value = settings.statusMessage;
   form.elements.emailOptIn.checked = Boolean(settings.emailOptIn);
 
-  // Replaced innerHTML with DOM APIs so displayName and statusMessage are never parsed as HTML
   const preview = document.getElementById("status-preview");
   preview.textContent = "";
   const namePara = document.createElement("p");
@@ -43,7 +41,6 @@ document.getElementById("settings-form").addEventListener("submit", async (event
   event.preventDefault();
 
   const formData = new FormData(event.currentTarget);
-  // Removed userId from payload; server assigns the target from the session
   const payload = {
     displayName: formData.get("displayName"),
     theme: formData.get("theme"),
@@ -60,7 +57,6 @@ document.getElementById("settings-form").addEventListener("submit", async (event
   await loadSettings();
 });
 
-// Changed from GET to POST so the toggle cannot be triggered by a cross-site image or link
 document.getElementById("enable-email").addEventListener("click", async () => {
   const result = await api("/api/settings/toggle-email", {
     method: "POST",
@@ -69,7 +65,6 @@ document.getElementById("enable-email").addEventListener("click", async () => {
   writeJson("settings-output", result);
 });
 
-// Changed from GET to POST so the toggle cannot be triggered by a cross-site image or link
 document.getElementById("disable-email").addEventListener("click", async () => {
   const result = await api("/api/settings/toggle-email", {
     method: "POST",

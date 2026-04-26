@@ -1,13 +1,13 @@
-// Removed the ?sid= session fixation helper that let an attacker pre-plant a known session ID
 let _csrfToken = null;
 
 async function api(path, options = {}) {
-  // Attach the CSRF token header on every state-changing request
   const method = (options.method || "GET").toUpperCase();
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {})
   };
+
+  // attach token on state-changing requests
   if (_csrfToken && method !== "GET" && method !== "HEAD") {
     headers["X-CSRF-Token"] = _csrfToken;
   }
@@ -31,7 +31,6 @@ async function api(path, options = {}) {
 
 async function loadCurrentUser() {
   const data = await api("/api/me");
-  // Capture the CSRF token from the session so it can be sent on future requests
   if (data.user && data.user.csrfToken) {
     _csrfToken = data.user.csrfToken;
   }
@@ -45,7 +44,6 @@ function writeJson(elementId, value) {
   }
 }
 
-// Expose setter so login.js can store the token returned at login
 function setCsrfToken(token) {
   _csrfToken = token;
 }

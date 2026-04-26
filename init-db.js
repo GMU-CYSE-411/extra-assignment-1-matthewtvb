@@ -1,6 +1,5 @@
 const fs = require("fs");
 const path = require("path");
-// Hash passwords at seed time so plaintext is never stored in the database
 const bcrypt = require("bcrypt");
 const { DEFAULT_DB_FILE, openDatabase } = require("./db");
 
@@ -24,7 +23,6 @@ async function initializeDatabase() {
     )
   `);
 
-  // Added csrf_token column so each session carries a token the server can verify
   await db.run(`
     CREATE TABLE sessions (
       id TEXT PRIMARY KEY,
@@ -57,7 +55,7 @@ async function initializeDatabase() {
     )
   `);
 
-  // Hash each seed password so the database never contains plaintext credentials
+  // Hash passwords before inserting. Plaintext is never stored
   const adminHash = await bcrypt.hash("admin123",   10);
   const aliceHash = await bcrypt.hash("wonderland", 10);
   const bobHash   = await bcrypt.hash("builder",    10);
