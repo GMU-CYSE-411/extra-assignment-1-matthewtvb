@@ -7,74 +7,56 @@
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <main class="page">
+    <main class="page narrow">
       <section class="panel">
         <a class="back-link" href="/">Home</a>
         <h1>Settings</h1>
-        <p class="muted">
-          The settings workflow is useful for reviewing both state-changing requests and ownership decisions.
-        </p>
       </section>
 
-      <section class="panel split">
-        <div>
-          <h2>Load Settings</h2>
-          <form id="settings-query-form" class="stacked-form compact">
-            <label>
-              User ID
-              <input type="number" name="userId" id="settings-user-id" />
-            </label>
-            <button type="submit">Load</button>
-          </form>
+      <section class="panel">
+        <h2>Your Profile</h2>
+        <div id="status-preview" class="preview-card"></div>
+      </section>
 
-          <div class="preview-card">
-            <h3>Browser Preview</h3>
-            <div id="status-preview">No settings loaded yet.</div>
-          </div>
-        </div>
+      <section class="panel">
+        <h2>Edit Settings</h2>
+        <!-- Removed hidden userId field; server derives the target user from the session -->
+        <form id="settings-form" class="stacked-form">
+          <label>
+            Display Name
+            <input type="text" name="displayName" />
+          </label>
+          <label>
+            Status Message
+            <textarea name="statusMessage" rows="2"></textarea>
+          </label>
+          <label>
+            Theme
+            <select name="theme">
+              <option value="classic">Classic</option>
+              <option value="ocean">Ocean</option>
+              <option value="forest">Forest</option>
+            </select>
+          </label>
+          <label class="inline">
+            <input type="checkbox" name="emailOptIn" />
+            Email opt-in
+          </label>
+          <button type="submit">Save Settings</button>
+        </form>
+      </section>
 
-        <div>
-          <h2>Update Settings</h2>
-          <form id="settings-form" class="stacked-form compact">
-            <label>
-              User ID
-              <input type="number" name="userId" id="settings-form-user-id" />
-            </label>
-            <label>
-              Display Name
-              <input type="text" name="displayName" />
-            </label>
-            <label>
-              Theme
-              <select name="theme">
-                <option value="classic">classic</option>
-                <option value="ocean">ocean</option>
-                <option value="forest">forest</option>
-              </select>
-            </label>
-            <label>
-              Status Message
-              <textarea name="statusMessage" rows="4"></textarea>
-            </label>
-            <label class="inline">
-              <input type="checkbox" name="emailOptIn" />
-              Email updates enabled
-            </label>
-            <button type="submit">Save Settings</button>
-          </form>
+      <section class="panel">
+        <h2>Email Preferences</h2>
+        <div class="button-row">
+          <button id="enable-email">Enable Email</button>
+          <button id="disable-email">Disable Email</button>
         </div>
       </section>
 
       <section class="panel">
-        <h2>Quick Toggle</h2>
-        <p class="muted">
-          This route exists for training and is intentionally unsafe. Read the network call before using it.
-        </p>
-        <div class="button-row">
-          <button id="enable-email" type="button">Enable Email</button>
-          <button id="disable-email" type="button">Disable Email</button>
-        </div>
-        <pre id="settings-output">Waiting for action...</pre>
+        <h2>Response</h2>
+        <pre id="settings-output">Loading...</pre>
       </section>
     </main>
 

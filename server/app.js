@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-// Use crypto for secure random session ID and CSRF token generation
+// Use crypto for secure random IDs
 const crypto = require("crypto");
-// Use bcrypt to verify hashed passwords at login
+// Use bcrypt for password verification
 const bcrypt = require("bcrypt");
 const express = require("express");
 const cookieParser = require("cookie-parser");
@@ -12,12 +12,12 @@ function sendPublicFile(response, fileName) {
   response.sendFile(path.join(__dirname, "..", "public", fileName));
 }
 
-// Math.random() is not cryptographically secure; replaced with crypto.randomBytes
+// Use crypto.randomBytes for secure random IDs
 function createSessionId() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// Generate a random CSRF token to be stored in the session and verified on requests
+// Generate a random CSRF token
 function createCsrfToken() {
   return crypto.randomBytes(32).toString("hex");
 }
@@ -67,7 +67,7 @@ async function createApp() {
     request.currentUser = row
       ? {
           sessionId: row.session_id,
-          // Expose csrfToken on the user object so requireCsrf can compare it
+                    // Expose csrfToken on the user object
           csrfToken: row.csrf_token,
           id: row.id,
           username: row.username,
@@ -88,7 +88,7 @@ async function createApp() {
     next();
   }
 
-  // Reject state-changing requests that do not supply a matching CSRF token header
+    // Reject requests with invalid CSRF token
   function requireCsrf(request, response, next) {
     if (!request.currentUser) { next(); return; }
     const token = request.headers["x-csrf-token"];
@@ -113,31 +113,31 @@ async function createApp() {
     const username = String(request.body.username || "");
     const password = String(request.body.password || "");
 
-    // Fetch by username only so we can verify the hash — never compare passwords in SQL
+        // Fetch user by username
     const user = await db.get(
       `SELECT id, username, role, display_name, password
        FROM users WHERE username = ?`,
       [username]
     );
 
-    // Use bcrypt.compare so the plaintext password is never used directly in a query
+        // Use bcrypt.compare for password verification
     if (!user || !(await bcrypt.compare(password, user.password))) {
       response.status(401).json({ error: "Invalid username or password." });
       return;
     }
 
-    // Always generate a fresh session ID after login to prevent session fixation
+        // Generate fresh session ID after login
     const sessionId = createSessionId();
     const csrfToken = createCsrfToken();
 
     await db.run("DELETE FROM sessions WHERE user_id = ?", [user.id]);
-    // Store the CSRF token alongside the session so the server can verify it later
+        // Store CSRF token with session
     await db.run(
       "INSERT INTO sessions (id, user_id, csrf_token, created_at) VALUES (?, ?, ?, ?)",
       [sessionId, user.id, csrfToken, new Date().toISOString()]
     );
 
-    // httpOnly blocks JS from reading the cookie; sameSite blocks cross-site requests
+        // Set secure cookie options
     response.cookie("sid", sessionId, {
       httpOnly: true,
       sameSite: "strict",
@@ -146,7 +146,7 @@ async function createApp() {
 
     response.json({
       ok: true,
-      // Return the CSRF token so the browser can attach it to future state-changing requests
+            // Return CSRF token to browser
       csrfToken,
       user: {
         id: user.id,
@@ -167,14 +167,14 @@ async function createApp() {
   });
 
   app.get("/api/notes", requireAuth, async (request, response) => {
-    // Derive ownerId from session; only admins may request another user's notes
+        // Get ownerId from session
     const user = request.currentUser;
     const search = String(request.query.search || "");
     const ownerId = (user.role === "admin" && request.query.ownerId)
       ? Number(request.query.ownerId)
       : user.id;
 
-    // Parameterize ownerId and search so neither can be used to inject SQL
+        // Parameterize queries to prevent SQL injection
     const notes = await db.all(
       `SELECT
          notes.id,
@@ -195,7 +195,7 @@ async function createApp() {
     response.json({ notes });
   });
 
-  // Added requireCsrf; ownerId now comes from the session so clients cannot spoof it
+    // Added requireCsrf; ownerId from session
   app.post("/api/notes", requireAuth, requireCsrf, async (request, response) => {
     const ownerId = request.currentUser.id;
     const title = String(request.body.title || "");
@@ -214,7 +214,7 @@ async function createApp() {
   });
 
   app.get("/api/settings", requireAuth, async (request, response) => {
-    // Derive userId from session; only admins may request another user's settings
+        // Get userId from session
     const user = request.currentUser;
     const userId = (user.role === "admin" && request.query.userId)
       ? Number(request.query.userId)
@@ -240,7 +240,7 @@ async function createApp() {
     response.json({ settings });
   });
 
-  // Added requireCsrf; userId now comes from the session so clients cannot target other users
+    // Added requireCsrf; userId from session
   app.post("/api/settings", requireAuth, requireCsrf, async (request, response) => {
     const user = request.currentUser;
     const userId = (user.role === "admin" && request.body.userId)
@@ -260,7 +260,7 @@ async function createApp() {
     response.json({ ok: true });
   });
 
-  // Changed from GET to POST so a side-effect request cannot be triggered by a plain link or image tag
+    // Changed to POST to prevent CSRF
   app.post("/api/settings/toggle-email", requireAuth, requireCsrf, async (request, response) => {
     const enabled = request.body.enabled === "1" ? 1 : 0;
 
@@ -276,7 +276,7 @@ async function createApp() {
     });
   });
 
-  // Added explicit role check so non-admin users cannot access the user directory
+    // Added role check for admin access
   app.get("/api/admin/users", requireAuth, async (request, response) => {
     if (request.currentUser.role !== "admin") {
       response.status(403).json({ error: "Forbidden." });

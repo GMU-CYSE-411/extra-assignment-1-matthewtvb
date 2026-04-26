@@ -11,55 +11,43 @@
       <section class="panel">
         <a class="back-link" href="/">Home</a>
         <h1>Notes</h1>
-        <p class="muted">
-          This page renders note content in the browser. Read the client code carefully before assuming the
-          server is the only place where trust breaks.
-        </p>
-      </section>
-
-      <section class="panel split">
-        <div>
-          <h2>View Notes</h2>
-          <form id="search-form" class="stacked-form compact">
-            <label>
-              Owner ID
-              <input type="number" name="ownerId" id="notes-owner-id" />
-            </label>
-            <label>
-              Search
-              <input type="text" name="search" id="notes-search" />
-            </label>
-            <button type="submit">Load Notes</button>
-          </form>
-        </div>
-
-        <div>
-          <h2>Create Note</h2>
-          <form id="create-note-form" class="stacked-form compact">
-            <label>
-              Owner ID
-              <input type="number" name="ownerId" id="create-owner-id" />
-            </label>
-            <label>
-              Title
-              <input type="text" name="title" required />
-            </label>
-            <label>
-              Body
-              <textarea name="body" rows="5" required></textarea>
-            </label>
-            <label class="inline">
-              <input type="checkbox" name="pinned" />
-              Pin note
-            </label>
-            <button type="submit">Save Note</button>
-          </form>
-        </div>
       </section>
 
       <section class="panel">
-        <h2>Rendered Notes</h2>
-        <div id="notes-list" class="notes-grid"></div>
+        <h2>Search Notes</h2>
+        <!-- Removed hidden ownerId field; server derives the owner from the session -->
+        <form id="search-form" class="stacked-form compact">
+          <label>
+            Search
+            <input type="text" name="search" placeholder="keyword" />
+          </label>
+          <button type="submit">Search</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Create Note</h2>
+        <!-- Removed hidden ownerId field; server assigns ownership from the session -->
+        <form id="create-note-form" class="stacked-form">
+          <label>
+            Title
+            <input type="text" name="title" required />
+          </label>
+          <label>
+            Body
+            <textarea name="body" rows="4"></textarea>
+          </label>
+          <label class="inline">
+            <input type="checkbox" name="pinned" />
+            Pin this note
+          </label>
+          <button type="submit">Save Note</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Your Notes</h2>
+        <div id="notes-list" class="notes-grid">Loading...</div>
       </section>
     </main>
 

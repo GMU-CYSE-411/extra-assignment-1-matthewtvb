@@ -15,19 +15,18 @@
     }
 
     const result = await api("/api/admin/users");
-    document.getElementById("admin-users").innerHTML = result.users
-      .map(
-        (entry) => `
-          <tr>
-            <td>${entry.id}</td>
-            <td>${entry.username}</td>
-            <td>${entry.role}</td>
-            <td>${entry.displayName}</td>
-            <td>${entry.noteCount}</td>
-          </tr>
-        `
-      )
-      .join("");
+    const tbody = document.getElementById("admin-users");
+    // Replaced innerHTML with DOM APIs so usernames and display names are never parsed as HTML
+    tbody.textContent = "";
+    result.users.forEach((entry) => {
+      const tr = document.createElement("tr");
+      [entry.id, entry.username, entry.role, entry.displayName, entry.noteCount].forEach((val) => {
+        const td = document.createElement("td");
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
   } catch (error) {
     document.getElementById("admin-warning").textContent = error.message;
   }

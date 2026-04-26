@@ -1,27 +1,34 @@
+// Replaced innerHTML with DOM APIs so note content is never parsed as HTML
 function noteCard(note) {
-  return `
-    <article class="note-card">
-      <h3>${note.title}</h3>
-      <p class="note-meta">Owner: ${note.ownerUsername} | ID: ${note.id} | Pinned: ${note.pinned}</p>
-      <div class="note-body">${note.body}</div>
-    </article>
-  `;
+  const article = document.createElement("article");
+  article.className = "note-card";
+
+  const h3 = document.createElement("h3");
+  h3.textContent = note.title;
+
+  const meta = document.createElement("p");
+  meta.className = "note-meta";
+  meta.textContent = `Owner: ${note.ownerUsername} | ID: ${note.id} | Pinned: ${note.pinned}`;
+
+  const body = document.createElement("div");
+  body.className = "note-body";
+  body.textContent = note.body;
+
+  article.appendChild(h3);
+  article.appendChild(meta);
+  article.appendChild(body);
+  return article;
 }
 
-async function loadNotes(ownerId, search) {
+// Removed ownerId parameter; the server derives it from the session
+async function loadNotes(search) {
   const query = new URLSearchParams();
-
-  if (ownerId) {
-    query.set("ownerId", ownerId);
-  }
-
-  if (search) {
-    query.set("search", search);
-  }
+  if (search) query.set("search", search);
 
   const result = await api(`/api/notes?${query.toString()}`);
   const notesList = document.getElementById("notes-list");
-  notesList.innerHTML = result.notes.map(noteCard).join("");
+  notesList.textContent = "";
+  result.notes.forEach((note) => notesList.appendChild(noteCard(note)));
 }
 
 (async function bootstrapNotes() {
@@ -33,9 +40,8 @@ async function loadNotes(ownerId, search) {
       return;
     }
 
-    document.getElementById("notes-owner-id").value = user.id;
-    document.getElementById("create-owner-id").value = user.id;
-    await loadNotes(user.id, "");
+    // Removed lines that set hidden ownerId fields on the forms
+    await loadNotes("");
   } catch (error) {
     document.getElementById("notes-list").textContent = error.message;
   }
@@ -43,17 +49,17 @@ async function loadNotes(ownerId, search) {
 
 document.getElementById("search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-
   const formData = new FormData(event.currentTarget);
-  await loadNotes(formData.get("ownerId"), formData.get("search"));
+  // Removed ownerId from the search call; server enforces ownership
+  await loadNotes(formData.get("search"));
 });
 
 document.getElementById("create-note-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(event.currentTarget);
+  // Removed ownerId from payload; server assigns ownership from the session
   const payload = {
-    ownerId: formData.get("ownerId"),
     title: formData.get("title"),
     body: formData.get("body"),
     pinned: formData.get("pinned") === "on"
@@ -64,7 +70,6 @@ document.getElementById("create-note-form").addEventListener("submit", async (ev
     body: JSON.stringify(payload)
   });
 
-  await loadNotes(payload.ownerId, "");
+  await loadNotes("");
   event.currentTarget.reset();
-  document.getElementById("create-owner-id").value = payload.ownerId;
 });

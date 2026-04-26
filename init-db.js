@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+// Hash passwords at seed time so plaintext is never stored in the database
+const bcrypt = require("bcrypt");
 const { DEFAULT_DB_FILE, openDatabase } = require("./db");
 
 async function initializeDatabase() {
@@ -22,10 +24,12 @@ async function initializeDatabase() {
     )
   `);
 
+  // Added csrf_token column so each session carries a token the server can verify
   await db.run(`
     CREATE TABLE sessions (
       id TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL,
+      csrf_token TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id)
     )
@@ -53,70 +57,40 @@ async function initializeDatabase() {
     )
   `);
 
+  // Hash each seed password so the database never contains plaintext credentials
+  const adminHash = await bcrypt.hash("admin123",   10);
+  const aliceHash = await bcrypt.hash("wonderland", 10);
+  const bobHash   = await bcrypt.hash("builder",    10);
+
   await db.run(
     "INSERT INTO users (username, password, role, display_name) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
     [
-      "admin",
-      "admin123",
-      "admin",
-      "Administrator",
-      "alice",
-      "wonderland",
-      "student",
-      "Alice Analyst",
-      "bob",
-      "builder",
-      "student",
-      "Bob Builder"
+      "admin", adminHash, "admin",   "Administrator",
+      "alice", aliceHash, "student", "Alice Analyst",
+      "bob",   bobHash,   "student", "Bob Builder"
     ]
   );
 
   await db.run(
     "INSERT INTO settings (user_id, status_message, theme, email_opt_in) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)",
     [
-      1,
-      "I review every note before class.",
-      "classic",
-      1,
-      2,
-      "Looking for trust boundary examples.",
-      "ocean",
-      1,
-      3,
-      "Need help with the admin checklist.",
-      "forest",
-      0
+      1, "I review every note before class.", "classic", 1,
+      2, "Looking for trust boundary examples.", "ocean", 1,
+      3, "Need help with the admin checklist.", "forest", 0
     ]
   );
 
   await db.run(
     "INSERT INTO notes (owner_id, title, body, pinned, created_at) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)",
     [
-      1,
-      "Instructor checklist",
-      "Review the settings flow before publishing the lab.",
-      1,
-      "2026-04-10T10:00:00.000Z",
-      2,
-      "DOM reminder",
-      "Never trust browser-rendered HTML from note content.",
-      0,
-      "2026-04-10T11:00:00.000Z",
-      2,
-      "Study idea",
-      "<strong>Reflection prompt:</strong> where does the browser interpret data as code?",
-      0,
-      "2026-04-11T09:15:00.000Z",
-      3,
-      "Lab question",
-      "Can a normal user reach /admin if the client hides the link?",
-      0,
-      "2026-04-11T09:20:00.000Z"
+      1, "Instructor checklist", "Review the settings flow before publishing the lab.", 1, "2026-04-10T10:00:00.000Z",
+      2, "DOM reminder", "Never trust browser-rendered HTML from note content.", 0, "2026-04-10T11:00:00.000Z",
+      2, "Study idea", "<strong>Reflection prompt:</strong> where does the browser interpret data as code?", 0, "2026-04-11T09:15:00.000Z",
+      3, "Lab question", "Can a normal user reach /admin if the client hides the link?", 0, "2026-04-11T09:20:00.000Z"
     ]
   );
 
   await db.close();
-
   console.log(`Initialized SQLite database at ${DEFAULT_DB_FILE}`);
 }
 
